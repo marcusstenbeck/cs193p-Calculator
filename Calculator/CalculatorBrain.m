@@ -53,6 +53,16 @@
     {
         result = [self popOperand] * [self popOperand];
     }
+    else if([operation isEqualToString:@"-"])
+    {
+        double subtrahend = [self popOperand];
+        result = [self popOperand] - subtrahend;
+    }
+    else if([operation isEqualToString:@"/"])
+    {
+        double divisor = [self popOperand];
+        result = [self popOperand] / divisor;
+    }
     
     [self pushOperand:result];
     
