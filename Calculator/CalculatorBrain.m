@@ -28,6 +28,11 @@
     _operandStack = operandStack;
 }
 
+- (void)clearOperandStack
+{
+    [self.operandStack removeAllObjects];
+}
+
 - (void)pushOperand:(double)operand
 {
     [self.operandStack addObject:[NSNumber numberWithDouble:operand]];
@@ -61,7 +66,27 @@
     else if([operation isEqualToString:@"/"])
     {
         double divisor = [self popOperand];
+        if(divisor == 0) divisor = 1;
         result = [self popOperand] / divisor;
+    }
+    else if([operation isEqualToString:@"π"])
+    {
+        result = M_PI;
+    }
+    else if([operation isEqualToString:@"sqrt"])
+    {
+        double number = [self popOperand];
+        if(number > 0)
+            number = sqrt(number);
+        result = number;
+    }
+    else if([operation isEqualToString:@"sin"])
+    {
+        result = sin([self popOperand]);
+    }
+    else if([operation isEqualToString:@"cos"])
+    {
+        result = cos([self popOperand]);
     }
     
     [self pushOperand:result];
