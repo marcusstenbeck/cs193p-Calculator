@@ -13,15 +13,24 @@
 @property (nonatomic) BOOL userIsInTheMiddleOfEnteringANumber;
 @property (nonatomic) BOOL userHasEnteredADecimalDot;
 @property (nonatomic, strong) CalculatorBrain *brain;
+@property (nonatomic, strong) NSDictionary *variableValues;
 @end
 
 @implementation CalculatorViewController
 
 @synthesize display = _display;
 @synthesize displayBrain = _displayBrain;
+@synthesize variableDisplay = _variableDisplay;
 @synthesize userIsInTheMiddleOfEnteringANumber = _userIsInTheMiddleOfEnteringANumber;
 @synthesize userHasEnteredADecimalDot = _userHasEnteredADecimalDot;
 @synthesize brain = _brain;
+@synthesize variableValues = _variableValues;
+
+- (NSDictionary *)variableValues
+{
+    if(!_variableValues) _variableValues = [[NSDictionary alloc] init];
+    return _variableValues;
+}
 
 - (CalculatorBrain *)brain
 {
@@ -65,11 +74,10 @@
 - (IBAction)enterPressed
 {
     // Push the current number to the calculator stack
-    [self.brain pushOperand:[self.display.text doubleValue]];
+    [self.brain pushOperand:[NSNumber numberWithDouble:self.display.text.doubleValue]];
     
-    // Save the history in the displayBrain label
-    self.displayBrain.text = [self.displayBrain.text stringByAppendingString:[@" " stringByAppendingString:self.display.text]];
-    
+    // Add the operation name to the history string
+    self.displayBrain.text = [CalculatorBrain descriptionOfProgram:self.brain.program];
     
     // Get ready to type in new numbers!
     self.userIsInTheMiddleOfEnteringANumber = NO;
@@ -80,17 +88,22 @@
 {
     if(self.userIsInTheMiddleOfEnteringANumber) [self enterPressed];
     
-    // Add the operation name to the history string
-    self.displayBrain.text = [self.displayBrain.text stringByAppendingString:[@" " stringByAppendingString:sender.currentTitle]];
+    // Send the operation to the stack
+    [self.brain pushOperand:sender.currentTitle];
     
-    double result = [self.brain performOperation:sender.currentTitle];
-    NSString *resultString = [NSString stringWithFormat:@"%g", result];
-    self.display.text = resultString;
+    // Get the history string
+    self.displayBrain.text = [CalculatorBrain descriptionOfProgram:self.brain.program];
+    
+    // Run the program
+    double result = [CalculatorBrain runProgram:self.brain.program usingVariableValues:self.variableValues];
+    
+    // Send results to display
+    self.display.text = [NSString stringWithFormat:@"%g", result];
 }
 
 - (IBAction)clearPressed
 {
-    self.display.text = @"";
+    self.display.text = @"0";
     self.displayBrain.text = @"";
     
     self.userIsInTheMiddleOfEnteringANumber = NO;
@@ -99,8 +112,36 @@
     [self.brain clearOperandStack];
 }
 
+- (IBAction)variablePressed:(UIButton *)sender
+{
+    if(self.userIsInTheMiddleOfEnteringANumber) [self enterPressed];
+    
+    // Add the operation name to the history string
+    self.displayBrain.text = [CalculatorBrain descriptionOfProgram:self.brain.program];
+    
+    // Push the variable onto the program stack
+    [self.brain pushOperand:sender.currentTitle];
+    
+    self.variableDisplay.text = [[CalculatorBrain variablesUsedInProgram:self.brain.program] description];
+}
+
+- (IBAction)testPressed:(UIButton *)sender
+{
+    NSString *action = sender.currentTitle;
+    
+    if([action isEqualToString:@"Test1"])
+    {
+        self.variableValues = [NSDictionary dictionaryWithObjectsAndKeys:@"2", @"a", @"3", @"b", @"9", @"x", nil];
+    }
+    else if([action isEqualToString:@"Test2"])
+    {
+        self.variableValues = [NSDictionary dictionaryWithObjectsAndKeys:@"3", @"a", @"5", @"b", @"7", @"x", nil];
+    }
+}
+
 - (void)viewDidUnload {
     [self setDisplayBrain:nil];
+    [self setVariableDisplay:nil];
     [super viewDidUnload];
 }
 @end
